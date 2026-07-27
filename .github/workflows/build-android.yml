@@ -18,6 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
+    env:
+      ANDROID_HOME: /usr/local/lib/android/sdk
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
@@ -31,26 +35,59 @@ jobs:
           distribution: temurin
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          packages: |
-            platforms;android-36
-            platforms;android-35
-            build-tools;36.0.0
-            cmake;3.22.1
-
-      - name: Install NDK r28
+      - name: Configure Android SDK
         run: |
-          echo "y" | sdkmanager "ndk;28.0.12433566"
-          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/28.0.12433566" >> "$GITHUB_ENV"
-          echo "ANDROID_NDK_ROOT=$ANDROID_HOME/ndk/28.0.12433566" >> "$GITHUB_ENV"
+          # Ubuntu runner has Android SDK preinstalled; check what's available
+          echo "=== Preinstalled SDK platforms ==="
+          ls "$ANDROID_HOME/platforms/" 2>/dev/null || true
+          echo "=== Preinstalled NDK ==="
+          ls "$ANDROID_HOME/ndk/" 2>/dev/null || true
+          echo "=== Preinstalled build-tools ==="
+          ls "$ANDROID_HOME/build-tools/" 2>/dev/null || true
+          echo "=== Preinstalled cmake ==="
+          ls "$ANDROID_HOME/cmake/" 2>/dev/null || true
+
+          # Install platform android-36 if not present
+          if [ ! -d "$ANDROID_HOME/platforms/android-36" ]; then
+            echo "Installing platforms;android-36..."
+            yes | sdkmanager "platforms;android-36" 2>&1 || true
+          fi
+
+          # Install build-tools 36.0.0 if not present
+          if [ ! -d "$ANDROID_HOME/build-tools/36.0.0" ]; then
+            echo "Installing build-tools;36.0.0..."
+            yes | sdkmanager "build-tools;36.0.0" 2>&1 || true
+          fi
+
+          # Install cmake 3.22.1 if not present
+          if [ ! -d "$ANDROID_HOME/cmake/3.22.1" ]; then
+            echo "Installing cmake;3.22.1..."
+            yes | sdkmanager "cmake;3.22.1" 2>&1 || true
+          fi
+
+          # Install NDK r28 if not present
+          if [ ! -d "$ANDROID_HOME/ndk/28.0.12433566" ]; then
+            echo "Installing NDK r28..."
+            yes | sdkmanager "ndk;28.0.12433566" 2>&1 || true
+          fi
+
+          # Set NDK home
+          NDK_HOME=$(ls -d "$ANDROID_HOME/ndk/"* 2>/dev/null | sort -V | tail -1)
+          echo "NDK_HOME=$NDK_HOME"
+          echo "ANDROID_NDK_HOME=$NDK_HOME" >> "$GITHUB_ENV"
+          echo "ANDROID_NDK_ROOT=$NDK_HOME" >> "$GITHUB_ENV"
+
+          echo "=== Final SDK state ==="
+          ls "$ANDROID_HOME/platforms/" 2>/dev/null || true
+          ls "$ANDROID_HOME/ndk/" 2>/dev/null || true
+          ls "$ANDROID_HOME/build-tools/" 2>/dev/null || true
 
       - name: Install host dependencies
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y -qq libtalloc-dev talloc-dev || true
-          sudo apt-get install -y -qq ar zstd
+          sudo apt-get install -y -qq libtalloc-dev || true
+          which ar || sudo apt-get install -y -qq binutils
+          which zstd || sudo apt-get install -y -qq zstd
 
       - name: Prepare provider customization
         run: |
@@ -58,13 +95,11 @@ jobs:
              src/android/app/provider-customization.properties
 
       - name: Build PRoot (native sandbox)
-        working-directory: ${{ github.workspace }}
         run: |
           chmod +x deps/build_proot.sh
           ./deps/build_proot.sh
 
       - name: Prepare Android sandbox (Alpine rootfs)
-        working-directory: ${{ github.workspace }}
         run: |
           chmod +x scripts/prepare_android_sandbox.sh
           ./scripts/prepare_android_sandbox.sh
