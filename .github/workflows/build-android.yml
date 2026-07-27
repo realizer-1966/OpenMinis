@@ -14,7 +14,7 @@ on:
 
 jobs:
   build:
-    name: Build Debug APK
+    name: Build Release APK
     runs-on: ubuntu-latest
     timeout-minutes: 90
 
@@ -122,11 +122,11 @@ jobs:
           echo "=== jniLibs ==="
           ls -lhR src/android/app/src/main/jniLibs/ || true
 
-      - name: Build debug APK
+      - name: Build release APK
         working-directory: src/android
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug \
+          ./gradlew :app:assembleRelease \
             --no-daemon \
             --stacktrace \
             -Pandroid.native.buildOutput=verbose
@@ -134,7 +134,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: openminis-debug-apk
-          path: src/android/app/build/outputs/apk/debug/*.apk
+          name: openminis-release-apk
+          path: src/android/app/build/outputs/apk/release/*.apk
           retention-days: 30
           compression-level: 0
