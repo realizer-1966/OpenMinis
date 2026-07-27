@@ -89,6 +89,17 @@ jobs:
           which ar || sudo apt-get install -y -qq binutils
           which zstd || sudo apt-get install -y -qq zstd
 
+      - name: Prepare debug skill assets
+        run: |
+          # The .claude/skills/debug-server/ directory is not in the public
+          # mirror (it lives in the private dev tree). Create a stub so Gradle's
+          # stageDebugSkillAssets task doesn't fail on missing input dir.
+          mkdir -p .claude/skills/debug-server/examples
+          if [ ! -f .claude/skills/debug-server/SKILL.md ]; then
+            printf '# debug-server skill unavailable\n\nSKILL.md was not found at build time.\n' \
+              > .claude/skills/debug-server/SKILL.md
+          fi
+
       - name: Prepare provider customization
         run: |
           cp src/android/app/provider-customization.properties.example \
