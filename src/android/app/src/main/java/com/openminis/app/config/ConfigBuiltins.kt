@@ -392,8 +392,8 @@ internal object ConfigBuiltins {
     }
 
     /** Mirrors iOS `fontScaleField` — exposes the integer scale level
-     *  (-2..3 in AppearanceScreen.kt) as a string token (xSmall / small /
-     *  default / medium / large / extraLarge) so reads round-trip the same
+     *  (-3..3 in AppearanceScreen.kt) as a string token (xxSmall / xSmall /
+     *  small / default / medium / large / extraLarge) so reads round-trip the same
      *  vocabulary as `chat.inputFontSize` / `appearance.appFontSize` on
      *  iOS. Centralised so both Android axes share one factory. */
     private fun fontScaleField(
@@ -403,7 +403,7 @@ internal object ConfigBuiltins {
         prefs: android.content.SharedPreferences,
         key: String,
     ): ConfigField {
-        val cases = listOf("xSmall", "small", "default", "medium", "large", "extraLarge")
+        val cases = listOf("xxSmall", "xSmall", "small", "default", "medium", "large", "extraLarge")
         return ClosureField(
             path = path,
             displayName = displayName,
@@ -414,6 +414,7 @@ internal object ConfigBuiltins {
             reader = {
                 val level = prefs.getInt(key, 0)
                 val token = when (level) {
+                    -3 -> "xxSmall"
                     -2 -> "xSmall"
                     -1 -> "small"
                     0 -> "default"
@@ -428,6 +429,7 @@ internal object ConfigBuiltins {
                 val token = (v as? ConfigValue.Str)?.value
                     ?: throw ConfigError.TypeMismatch("string")
                 val level = when (token) {
+                    "xxSmall" -> -3
                     "xSmall" -> -2
                     "small" -> -1
                     "default" -> 0

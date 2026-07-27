@@ -122,10 +122,10 @@ fun showChatTitleEnabled(context: Context): Boolean =
 fun autoExpandThinkingEnabled(context: Context): Boolean =
     getAppearancePrefs(context).getBoolean(KEY_AUTO_EXPAND_THINKING, true)
 
-/** Font scale levels matching iOS: XS(-2) Small(-1) Default(0) Medium(1) Large(2) XL(3) */
-private val fontScaleLabels = listOf("XS", "Small", "Default", "Medium", "Large", "XL")
-private val fontScaleValues = listOf(-2, -1, 0, 1, 2, 3)
-private val fontScaleMultipliers = listOf(0.88f, 0.94f, 1.0f, 1.06f, 1.12f, 1.21f)
+/** Font scale levels matching iOS: XS(-3) XS(-2) Small(-1) Default(0) Medium(1) Large(2) XL(3) */
+private val fontScaleLabels = listOf("XXS", "XS", "Small", "Default", "Medium", "Large", "XL")
+private val fontScaleValues = listOf(-3, -2, -1, 0, 1, 2, 3)
+private val fontScaleMultipliers = listOf(0.78f, 0.88f, 0.94f, 1.0f, 1.06f, 1.12f, 1.21f)
 
 private data class LanguageOption(val code: String, val flag: String, val label: String)
 // "System" label is resolved at call-site via stringResource so it follows
