@@ -92,6 +92,15 @@ fun TerminalScreen(
     val scope = rememberCoroutineScope()
     var ctrlActive by remember { mutableStateOf(false) }
 
+    // Apply app font scale to terminal font size.
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val fontScaleLevel = remember {
+        com.openminis.app.ui.settings.getAppearancePrefs(context)
+            .getInt(com.openminis.app.ui.settings.KEY_FONT_APP_BASE, 0)
+    }
+    val fontScale = remember(fontScaleLevel) { com.openminis.app.ui.settings.fontScaleForLevel(fontScaleLevel) }
+    val terminalFontSizeSp = 13f * fontScale
+
     // Pipe PTY output → emulator.
     LaunchedEffect(terminalSession) {
         terminalSession.outputBytes.collect { bytes ->
@@ -193,6 +202,7 @@ fun TerminalScreen(
                 // fallback if anything regresses with the View interop path.
                 TerminalNativeViewCompose(
                     emulator = emulator,
+                    fontSizeSp = terminalFontSizeSp,
                     onResize = { cols, rows ->
                         emulator.resize(cols, rows)
                         terminalSession.setWindowSize(cols, rows)
